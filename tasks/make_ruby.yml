@@ -1,0 +1,51 @@
+---
+- name: Clone and checkout ruby {{ ruby_install_version }} ({{ ruby_make_dir }}). No update
+  git:
+    dest: "{{ ruby_make_dir }}"
+    repo: "{{ ruby_repo_url }}"
+    version: "v{{ ruby_install_version|regex_replace('[.]', '_') }}"
+    update: no
+
+# Fixes a bug with a recent version of bison (my version was 3.6.4)
+# and gcc = 10.2.0
+# Solution: https://bugs.ruby-lang.org/issues/17106
+- name: Cherry-pick bug fix
+  shell: '{ git log -n1 | grep -q $COMMIT_SHA1; } || git cherry-pick -x $COMMIT_SHA1'
+  args:
+    executable: /bin/bash
+    chdir: "{{ ruby_make_dir }}"
+  changed_when: False
+  environment: "{{ bash_env | combine( { 'COMMIT_SHA1': '47720e2255f34ecad49763c66a7ea02a55a3f60a' } ) }}"
+  when: ruby_install_version == '2.6.6'
+
+- name: Run autoconf (creates {{ ruby_autoconf_log }})
+  shell: 'autoconf |& tee {{ ruby_autoconf_log }}'
+  args:
+    creates: ./configure
+    executable: /bin/bash
+    chdir: "{{ ruby_make_dir }}"
+  environment: "{{ bash_env }}"
+
+- name: Configure ruby build (creates {{ ruby_configure_log }})
+  shell: './configure {{ ruby_configure_opts|join(" ") }} |& tee {{ ruby_configure_log }}'
+  args:
+    creates: "{{ ruby_configure_log }}"
+    executable: /bin/bash
+    chdir: "{{  ruby_make_dir  }}"
+  environment: "{{ bash_env }}"
+
+- name: Build ruby {{ ruby_install_version }} (creates {{ ruby_make_log }})
+  shell: 'make {{ ruby_make_opts | join(" ") }} |& tee {{ ruby_make_log }}'
+  args:
+    creates: "{{ ruby_make_log }}"
+    executable: /bin/bash
+    chdir: "{{ ruby_make_dir }}"
+  environment: "{{ bash_env }}"
+
+- name: Install ruby (creates {{ ruby_make_install_log }})
+  shell: 'make install |& tee {{ ruby_make_install_log }}'
+  args:
+    creates: "{{ ruby_make_install_log }}"
+    executable: /bin/bash
+    chdir: "{{ ruby_make_dir }}"
+  environment: "{{ bash_env }}"

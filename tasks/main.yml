@@ -1,0 +1,47 @@
+---
+- name: Switch ruby version on uberspace hosts
+  block:
+    - name: Install ruby ({{ ruby_install_version | regex_replace('[.][0-9]+$', '') }})
+      shell: uberspace tools version use ruby {{ ruby_install_version | regex_replace('[.][0-9]+$', '') }}
+      args:
+        executable: /bin/bash
+      changed_when: False
+      environment: "{{ bash_env }}"
+    - name: Install bundler ({{ ruby_bundler_version }})
+      shell: gem install bundler --no-document --version "{{ ruby_bundler_version }}"
+      args:
+        executable: /bin/bash
+      changed_when: False
+      environment: "{{ bash_env }}"
+  when:
+    - ansible_domain == 'uberspace.de'
+    - ruby_install_method == 'package'
+
+- name: Install ruby and bundler with package manager
+  block:
+    - name: Install ruby ({{ ruby_package }})
+      package:
+        state: present
+        name: "{{ ruby_package }}"
+    - name: install bundler ({{ ruby_bundler_package }})
+      package:
+        state: present
+        name: "{{ ruby_bundler_package }}"
+      when: not ruby_bundler_user_install
+  become: yes
+  become_user: root
+  when:
+    - ansible_domain != 'uberspace.de'
+    - ruby_install_method == 'package'
+
+- name: Make ruby from source
+  include_tasks: make_ruby.yml
+  when: ruby_install_method == 'make'
+
+- name: Install bundler in user's home ({{ ansible_env.HOME }})
+  shell: gem install bundler --user-install --no-document --version "{{ ruby_bundler_version }}"
+  args:
+    executable: /bin/bash
+  changed_when: False
+  environment: "{{ bash_env }}"
+  when: ruby_bundler_user_install

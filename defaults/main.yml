@@ -1,0 +1,23 @@
+---
+ruby_install_method: 'package'
+ruby_install_version: '2.6.6'
+ruby_package: 'ruby'
+ruby_bundler_version: '>= 2'
+ruby_bundler_package: 'ruby-bundler'
+ruby_bundler_user_install: yes
+
+ruby_repo_url: "https://github.com/ruby/ruby.git"
+ruby_archive_url: >
+  https://cache.ruby-lang.org/pub/ruby/{{ ruby_install_version
+  | regex_replace('[.][0-9]$', '') }}/ruby-{{ ruby_install_version }}.tar.gz
+ruby_make_dir: "{{ workspace_dir }}/ruby"
+ruby_configure_opts:
+  - '--disable-install-rdoc'
+  - '--prefix={{ local_dir }}'
+ruby_make_opts:
+  - '-j2'
+
+ruby_autoconf_log: "{{ log_dir }}/ruby_autoconf.log"
+ruby_configure_log: "{{ log_dir }}/ruby_configure.log"
+ruby_make_log: "{{ log_dir }}/ruby_make.log"
+ruby_make_install_log: "{{ log_dir }}/ruby_make_install.log"
