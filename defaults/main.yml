@@ -1,23 +1,38 @@
 ---
+# To provide the shell module with all bashrc modifications like PATH,
+# LD_LIBRARY_PATH etc.
+bash_env:
+  BASH_ENV: '~/.bashrc'
+
+# This is the build directory
+workspace_dir: "{{ ansible_env.HOME }}/workspace"
+
+# Recognized values
+# package|make_unprivileged|make_privileged|uberspace
 ruby_install_method: 'package'
-ruby_install_version: '2.6.6'
-ruby_package: 'ruby'
-ruby_bundler_version: '>= 2'
-ruby_bundler_package: 'ruby-bundler'
-ruby_bundler_user_install: yes
+
+# Only important when ruby_install_method is make_*
+ruby_install_build_dependencies: yes
+
+# Always specify the full version with all 3 digits!
+# ruby_version is not recognized when ruby_install_method is 'package'. See
+# ruby_packages in vars/${OS_FAMILY}.yml if you want to specify a version for
+# the package.
+ruby_version: '2.6.6'
+
+# Install gems per default with --user-install. Can be overriden per gem when
+# specifying gems in the ruby_gems list (see below)
+ruby_gems_user_install: no
+
+# All keys from the gem module (ansible-doc gem) are recognized. 'name' is the
+# only mandatory key
+ruby_gems:
+  - name: 'bundler'
 
 ruby_repo_url: "https://github.com/ruby/ruby.git"
-ruby_archive_url: >
-  https://cache.ruby-lang.org/pub/ruby/{{ ruby_install_version
-  | regex_replace('[.][0-9]$', '') }}/ruby-{{ ruby_install_version }}.tar.gz
-ruby_make_dir: "{{ workspace_dir }}/ruby"
-ruby_configure_opts:
-  - '--disable-install-rdoc'
-  - '--prefix={{ local_dir }}'
-ruby_make_opts:
-  - '-j2'
 
-ruby_autoconf_log: "{{ log_dir }}/ruby_autoconf.log"
-ruby_configure_log: "{{ log_dir }}/ruby_configure.log"
-ruby_make_log: "{{ log_dir }}/ruby_make.log"
-ruby_make_install_log: "{{ log_dir }}/ruby_make_install.log"
+# This is the ruby build and source directory
+ruby_make_dir: "{{ workspace_dir }}/ruby"
+
+# Specify options as list for 'make' when building the source like '-j2'
+ruby_make_opts: []

@@ -1,0 +1,7 @@
+---
+- name: Switch ruby version to ({{ ruby_install_version | regex_replace('[.][0-9]+$', '') }})
+  shell: uberspace tools version use ruby {{ ruby_install_version | regex_replace('[.][0-9]+$', '') }}
+  args:
+    executable: /bin/bash
+  changed_when: False
+  environment: "{{ bash_env }}"

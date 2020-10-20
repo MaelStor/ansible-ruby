@@ -1,0 +1,12 @@
+---
+ruby_packages:
+  - "ruby"
+  - "ruby-devel"
+  - "rubygems"
+  - "@Development Tools"
+
+ruby_make_dependencies:
+  - "@Development Tools"
+  - "zlib-devel"
+  - "openssl-static"
+  - "ruby"

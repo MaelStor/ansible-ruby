@@ -1,0 +1,16 @@
+---
+ruby_packages:
+  - ruby
+  - base-devel
+
+ruby_make_dependencies:
+  - ruby
+  - git
+  - base-devel
+  - zlib
+  - openssl
+  - libyaml
+  - readline
+  - ncurses
+  - libffi
+  - gdbm

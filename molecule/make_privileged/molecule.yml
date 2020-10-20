@@ -1,0 +1,37 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: centos_make_privileged
+    image: "centos:7"
+    env:
+      OS_FAMILY: "redhat"
+  - name: archlinux_make_privileged
+    image: "archlinux:latest"
+    env:
+      OS_FAMILY: "archlinux"
+  - name: debian_make_privileged
+    image: "debian:9"
+    env:
+      OS_FAMILY: "debian"
+  - name: ubuntu_make_privileged
+    image: "ubuntu:bionic"
+    env:
+      OS_FAMILY: "debian"
+lint: |
+  set -e
+  yamllint .
+  ansible-lint
+
+provisioner:
+  name: ansible
+  ansible_args: []
+  config_options:
+    defaults:
+      stdout_callback: yaml
+      stderr_callback: yaml
+
+verifier:
+  name: ansible

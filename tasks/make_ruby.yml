@@ -1,51 +1,80 @@
 ---
-- name: Clone and checkout ruby {{ ruby_install_version }} ({{ ruby_make_dir }}). No update
-  git:
-    dest: "{{ ruby_make_dir }}"
-    repo: "{{ ruby_repo_url }}"
-    version: "v{{ ruby_install_version|regex_replace('[.]', '_') }}"
-    update: no
+- name: Include configuration options depending on installation method
+  include_vars: "{{ ruby_install_method }}.yml"
 
-# Fixes a bug with a recent version of bison (my version was 3.6.4)
-# and gcc = 10.2.0
-# Solution: https://bugs.ruby-lang.org/issues/17106
-- name: Cherry-pick bug fix
-  shell: '{ git log -n1 | grep -q $COMMIT_SHA1; } || git cherry-pick -x $COMMIT_SHA1'
-  args:
-    executable: /bin/bash
-    chdir: "{{ ruby_make_dir }}"
-  changed_when: False
-  environment: "{{ bash_env | combine( { 'COMMIT_SHA1': '47720e2255f34ecad49763c66a7ea02a55a3f60a' } ) }}"
-  when: ruby_install_version == '2.6.6'
+- name: Include platform specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution.lower() }}.yml'
+        - '{{ ansible_os_family.lower() }}.yml'
+      paths:
+        - '{{ role_path }}/vars'
 
-- name: Run autoconf (creates {{ ruby_autoconf_log }})
-  shell: 'autoconf |& tee {{ ruby_autoconf_log }}'
-  args:
-    creates: ./configure
-    executable: /bin/bash
-    chdir: "{{ ruby_make_dir }}"
-  environment: "{{ bash_env }}"
+- name: Make ruby
+  block:
+    - name: Install build dependencies
+      package:
+        name: "{{ item }}"
+      loop: "{{ ruby_make_dependencies }}"
+      become: yes
+      become_user: root
+      when: ruby_install_build_dependencies
 
-- name: Configure ruby build (creates {{ ruby_configure_log }})
-  shell: './configure {{ ruby_configure_opts|join(" ") }} |& tee {{ ruby_configure_log }}'
-  args:
-    creates: "{{ ruby_configure_log }}"
-    executable: /bin/bash
-    chdir: "{{  ruby_make_dir  }}"
-  environment: "{{ bash_env }}"
+    - name: Create workspace
+      file:
+        path: "{{ workspace_dir }}"
+        state: directory
 
-- name: Build ruby {{ ruby_install_version }} (creates {{ ruby_make_log }})
-  shell: 'make {{ ruby_make_opts | join(" ") }} |& tee {{ ruby_make_log }}'
-  args:
-    creates: "{{ ruby_make_log }}"
-    executable: /bin/bash
-    chdir: "{{ ruby_make_dir }}"
-  environment: "{{ bash_env }}"
+    - name: Clone and checkout ruby {{ ruby_version }}
+      git:
+        dest: "{{ ruby_make_dir }}"
+        repo: "{{ ruby_repo_url }}"
+        version: "v{{ ruby_version|regex_replace('[.]', '_') }}"
+        update: "{{ ruby_version != '2.6.6' }}"
 
-- name: Install ruby (creates {{ ruby_make_install_log }})
-  shell: 'make install |& tee {{ ruby_make_install_log }}'
-  args:
-    creates: "{{ ruby_make_install_log }}"
-    executable: /bin/bash
-    chdir: "{{ ruby_make_dir }}"
-  environment: "{{ bash_env }}"
+    # Fixes a bug with a recent version of bison (my version was 3.6.4)
+    # and gcc = 10.2.0
+    # Solution: https://bugs.ruby-lang.org/issues/17106
+    - name: Cherry-pick bug fix
+      shell: 'git cherry-pick -n $COMMIT_SHA1'
+      args:
+        executable: /bin/bash
+        chdir: "{{ ruby_make_dir }}"
+      changed_when: False
+      environment: "{{ bash_env | combine( { 'COMMIT_SHA1': '47720e2255f34ecad49763c66a7ea02a55a3f60a' } ) }}"
+      when: ruby_version == '2.6.6'
+
+    - name: Run autoconf
+      shell: 'autoconf |& tee {{ workspace_dir }}/ruby_autoconf.log'
+      args:
+        creates: "{{ workspace_dir }}/ruby_autoconf.log"
+        executable: /bin/bash
+        chdir: "{{ ruby_make_dir }}"
+      environment: "{{ bash_env }}"
+
+    - name: Configure ruby build
+      shell: './configure {{ ruby_configure_opts|join(" ") }} |& tee {{ workspace_dir }}/ruby_configure.log'
+      args:
+        creates: "{{ workspace_dir }}/ruby_configure.log"
+        executable: /bin/bash
+        chdir: "{{  ruby_make_dir  }}"
+      environment: "{{ bash_env }}"
+
+    - name: Build ruby {{ ruby_version }}
+      shell: 'make {{ ruby_make_opts | join(" ") }} |& tee {{ workspace_dir }}/ruby_make.log'
+      args:
+        creates: "{{ workspace_dir }}/ruby_make.log"
+        executable: /bin/bash
+        chdir: "{{ ruby_make_dir }}"
+      environment: "{{ bash_env }}"
+
+    - name: Install ruby {{ ruby_version }}
+      shell: 'make install |& tee {{ workspace_dir }}/ruby_make_install.log'
+      args:
+        creates: "{{ workspace_dir }}/ruby_make_install.log"
+        executable: /bin/bash
+        chdir: "{{ ruby_make_dir }}"
+      environment: "{{ bash_env }}"
+  become: "{{ ruby_install_method == 'make_privileged' }}"
+  become_user: root

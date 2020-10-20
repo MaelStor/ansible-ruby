@@ -1,0 +1,14 @@
+---
+- name: Converge
+  hosts: all
+  become: yes
+  become_user: root
+
+  roles:
+    - role: ruby
+      vars:
+        ruby_install_method: package
+        ruby_gems:
+          - name: hello-world
+
+# vim: set ft=yaml.ansible :

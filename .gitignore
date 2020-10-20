@@ -1,10 +1,5 @@
 # Ansible custom
-roles/**/vars/
-roles-custom/
-.vault-pass
-
-# gitlab role
-roles/gitlab/files/assets.tar.gz
+vars/main.yml
 
 # Created by https://www.toptal.com/developers/gitignore/api/vim,ansible
 # Edit at https://www.toptal.com/developers/gitignore?templates=vim,ansible

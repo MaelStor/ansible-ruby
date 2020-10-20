@@ -1,0 +1,25 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: centos_make_unprivileged
+    image: "centos:7"
+    env:
+      OS_FAMILY: "redhat"
+lint: |
+  set -e
+  yamllint .
+  ansible-lint
+
+provisioner:
+  name: ansible
+  ansible_args: []
+  config_options:
+    defaults:
+      stdout_callback: yaml
+      stderr_callback: yaml
+
+verifier:
+  name: ansible

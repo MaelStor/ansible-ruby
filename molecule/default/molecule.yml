@@ -1,0 +1,41 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: archlinux_default
+    image: "archlinux:latest"
+    env:
+      OS_FAMILY: "archlinux"
+  - name: debian_default
+    image: "debian:9"
+    env:
+      OS_FAMILY: "debian"
+  - name: ubuntu-xenial_default
+    image: "ubuntu:xenial"
+    env:
+      OS_FAMILY: "debian"
+  - name: ubuntu-bionic_default
+    image: "ubuntu:bionic"
+    env:
+      OS_FAMILY: "debian"
+  - name: centos_default
+    image: "centos:7"
+    env:
+      OS_FAMILY: "redhat"
+lint: |
+  set -e
+  yamllint .
+  ansible-lint
+
+provisioner:
+  name: ansible
+  ansible_args: []
+  config_options:
+    defaults:
+      stdout_callback: yaml
+      stderr_callback: yaml
+
+verifier:
+  name: ansible

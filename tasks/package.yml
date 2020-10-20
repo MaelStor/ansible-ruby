@@ -1,0 +1,17 @@
+---
+- name: Include platform specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution.lower() }}.yml'
+        - '{{ ansible_os_family.lower() }}.yml'
+      paths:
+        - '{{ role_path }}/vars'
+
+- name: Install ruby packages
+  package:
+    state: present
+    name: "{{ item }}"
+  loop: "{{ ruby_packages }}"
+  become: yes
+  become_user: root

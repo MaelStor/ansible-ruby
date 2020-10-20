@@ -1,0 +1,60 @@
+---
+stages:
+  - test
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip"
+  GIT_STRATEGY: clone
+  PATH: "~/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+cache:
+  key: "$CI_JOB_NAME"
+  paths:
+    - .pip/
+    - .venv/
+
+before_script:
+  - python -V
+  - pip install --user virtualenv
+  - virtualenv .venv
+  - source .venv/bin/activate
+  - pip install ansible yamllint ansible-lint molecule[docker] docker
+  - ansible --version
+  - molecule --version
+  - docker info
+
+package:
+  stage: test
+  tags:
+    - shell
+  script:
+    - molecule test -s default
+  only:
+    refs:
+      - branches
+  except:
+    - master
+
+make_privileged:
+  stage: test
+  tags:
+    - shell
+  script:
+    - molecule test -s make_privileged
+  only:
+    refs:
+      - branches
+  except:
+    - master
+
+make_unprivileged:
+  stage: test
+  tags:
+    - shell
+  script:
+    - molecule test -s make_unprivileged
+  only:
+    refs:
+      - branches
+  except:
+    - master

@@ -1,0 +1,14 @@
+---
+- name: Verify
+  hosts: all
+
+  tasks:
+    - name: Verify that ruby is installed
+      shell: "/usr/bin/ruby --version"
+      args:
+        executable: /bin/bash
+      changed_when: False
+      environment:
+        BASH_ENV: "{{ ansible_env.HOME }}/.bashrc"
+
+# vim: set ft=yaml.ansible :

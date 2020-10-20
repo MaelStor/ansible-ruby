@@ -1,47 +1,36 @@
 ---
-- name: Switch ruby version on uberspace hosts
-  block:
-    - name: Install ruby ({{ ruby_install_version | regex_replace('[.][0-9]+$', '') }})
-      shell: uberspace tools version use ruby {{ ruby_install_version | regex_replace('[.][0-9]+$', '') }}
-      args:
-        executable: /bin/bash
-      changed_when: False
-      environment: "{{ bash_env }}"
-    - name: Install bundler ({{ ruby_bundler_version }})
-      shell: gem install bundler --no-document --version "{{ ruby_bundler_version }}"
-      args:
-        executable: /bin/bash
-      changed_when: False
-      environment: "{{ bash_env }}"
-  when:
-    - ansible_domain == 'uberspace.de'
-    - ruby_install_method == 'package'
+- name: Install ruby with package manager
+  include_tasks: package.yml
+  when: ruby_install_method == 'package'
 
-- name: Install ruby and bundler with package manager
-  block:
-    - name: Install ruby ({{ ruby_package }})
-      package:
-        state: present
-        name: "{{ ruby_package }}"
-    - name: install bundler ({{ ruby_bundler_package }})
-      package:
-        state: present
-        name: "{{ ruby_bundler_package }}"
-      when: not ruby_bundler_user_install
-  become: yes
-  become_user: root
-  when:
-    - ansible_domain != 'uberspace.de'
-    - ruby_install_method == 'package'
+- name: Install ruby on uberspace hosts
+  include_tasks: uberspace.yml
+  when: ruby_install_method == 'uberspace'
 
-- name: Make ruby from source
+- name: Install ruby from source as unprivileged user in his home directory
   include_tasks: make_ruby.yml
-  when: ruby_install_method == 'make'
+  when: ruby_install_method == 'make_unprivileged'
 
-- name: Install bundler in user's home ({{ ansible_env.HOME }})
-  shell: gem install bundler --user-install --no-document --version "{{ ruby_bundler_version }}"
-  args:
-    executable: /bin/bash
-  changed_when: False
-  environment: "{{ bash_env }}"
-  when: ruby_bundler_user_install
+- name: Install ruby from source as root in a global location
+  include_tasks: make_ruby.yml
+  when: ruby_install_method == 'make_privileged'
+
+- name: Install gems
+  gem:
+    build_flags: "{{ item.build_flags | default(omit) }}"
+    env_shebang: "{{ item.env_shebang | default(omit) }}"
+    executable: "{{ item.executable | default(ruby_gem_executable) | default(omit) }}"
+    force: "{{ item.force | default(omit) }}"
+    gem_source: "{{ item.gem_source | default(omit) }}"
+    include_dependencies: "{{ item.include_dependencies | default(omit) }}"
+    include_doc: "{{ item.include_doc | default(omit) }}"
+    install_dir: "{{ item.install_dir | default(omit) }}"
+    name: "{{ item.name }}"
+    pre_release: "{{ item.pre_release | default(omit) }}"
+    repository: "{{ item.repository | default(omit) }}"
+    state: "{{ item.state | default(omit) }}"
+    user_install: "{{ item.user_install | default(ruby_gems_user_install) }}"
+    version: "{{ item.version | default(omit) }}"
+  loop: "{{ ruby_gems }}"
+  become: "{{ not ruby_gems_user_install }}"
+  become_user: root

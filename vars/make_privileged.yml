@@ -1,0 +1,10 @@
+---
+# Specify the options passed to './configure'
+ruby_configure_opts:
+  - "--disable-install-rdoc"
+  - "--prefix=/usr/local"
+
+# The gem executable for the ansible gem module
+ruby_gem_executable: "/usr/local/bin/gem"
+
+# vim: set ft=yaml.ansible :

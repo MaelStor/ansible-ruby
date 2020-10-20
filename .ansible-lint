@@ -1,0 +1,9 @@
+warn_list:
+  - '208' # File permissions unset or incorrect
+  - '306' # Shells that use pipes should set the pipefail option
+  - '303' # git used in place of git module
+  - experimental
+skip_list:
+  - '305' # Use shell only when shell functionality is required
+  - '503'
+  - '106' # Role name uberspace.yml does not match ``^[a-z][a-z0-9_]+$`` pattern

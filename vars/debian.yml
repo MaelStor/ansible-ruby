@@ -1,0 +1,23 @@
+---
+ruby_packages:
+  - build-essential
+  - ruby-full
+  - ruby-dev
+  - autoconf
+  - libtool
+  - autogen
+  - bison
+
+ruby_make_dependencies:
+  - ruby
+  - git-core
+  - build-essential
+  - bison
+  - autoconf
+  - zlib1g-dev
+  - libssl-dev
+  - libyaml-dev
+  - libreadline6-dev
+  - libncurses5-dev
+  - libffi-dev
+  - libgdbm-dev
